@@ -49,7 +49,9 @@
 // these all err in the direction of being too slow, which is fine
 #define T2_TWI_FM (usToDelayLoopIter(3,2,500000)) //1.5us = 3/2 -> 3 is us passed, 2 is divisor
 #define T4_TWI_FM (usToDelayLoopIter(3,4,750000)) //0.75us = 3/4th -> 3 is the us passed, 4 us divisor.
-
+// Half Speed frequency for bad bus traces
+#define T2_TWI_SM (usToDelayLoopIter(20, 1, 500000) )
+#define T4_TWI_SM (usToDelayLoopIter(16, 1, 500000) )
 
 // Defines controlling code generating
 //#define PARAM_VERIFICATION
@@ -89,6 +91,8 @@
 #define DELAY_T4TWI_FM (_delay_loop_1(T4_TWI_FM))
 #define DELAY_T2TWI (_delay_loop_1(T2_TWI))
 #define DELAY_T4TWI (_delay_loop_1(T4_TWI))
+#define DELAY_T2TWI_SM (_delay_loop_1(T2_TWI_SM))
+#define DELAY_T4TWI_SM (_delay_loop_1(T4_TWI_SM))
 //********** Prototypes **********//
 
 void USI_TWI_Master_Initialise(void);

@@ -389,7 +389,9 @@
   }
 
   void TwoWire::setClock(uint32_t clock) {
-    USI_TWI_Master_Speed(clock>200000);
+    if (clock > 200000) USI_TWI_Master_Speed(1);
+    else if (clock >= 100000) USI_TWI_Master_Speed(0);
+    else USI_TWI_Master_Speed(2); //Half Speed Mode
   }
 
   uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity,

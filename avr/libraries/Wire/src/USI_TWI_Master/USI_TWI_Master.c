@@ -49,8 +49,21 @@ union USI_TWI_state {
   };
 } USI_TWI_state;
 
-void USI_TWI_Master_Speed(uint8_t fm) {
-  USI_TWI_MASTER_SPEED = fm ? 1 : 0;
+void USI_TWI_Master_Speed(uint8_t speed) {
+  switch (speed){
+    case 0:
+      USI_TWI_MASTER_SPEED = 0;
+      break;
+    case 1:
+      USI_TWI_MASTER_SPEED = 1;
+      break;
+    case 2:
+      USI_TWI_MASTER_SPEED = 2;
+      break;
+    default:
+      USI_TWI_MASTER_SPEED = 0;
+      break;
+  }
 }
 
 /*---------------------------------------------------------------------------
@@ -154,10 +167,14 @@ unsigned char USI_TWI_Start_Transceiver_With_Data_Stop(unsigned char *msg, unsig
   /* Release SCL to ensure that (repeated) Start can be performed */
   USI_CLOCK_PORT |= (1 << USI_CLOCK_BIT);           // Release SCL.
   while (!(USI_CLOCK_PIN & (1 << USI_CLOCK_BIT)));  // Verify that SCL becomes high.
-  if (USI_TWI_MASTER_SPEED) DELAY_T4TWI_FM; else DELAY_T2TWI;          // Delay for T4TWI if TWI_FAST_MODE,  T2TWI if TWI_STANDARD_MODE
+  if (USI_TWI_MASTER_SPEED == 1) DELAY_T4TWI_FM;
+  else if (USI_TWI_MASTER_SPEED == 2) DELAY_T2TWI_SM;
+  else DELAY_T2TWI;          // Delay for T4TWI if TWI_FAST_MODE,  T2TWI if TWI_STANDARD_MODE
                                                     /* Generate Start Condition */
   USI_PORT &= ~(1 << USI_DI_BIT);                   // Force SDA LOW.
-  if (USI_TWI_MASTER_SPEED) DELAY_T4TWI_FM; else DELAY_T4TWI;
+  if (USI_TWI_MASTER_SPEED == 1) DELAY_T4TWI_FM; 
+  else if (USI_TWI_MASTER_SPEED == 2) DELAY_T4TWI_SM;
+  else DELAY_T4TWI;
   USI_CLOCK_PORT &= ~(1 << USI_CLOCK_BIT);          // Pull SCL LOW.
   USI_PORT |= (1 << USI_DI_BIT);                    // Release SDA.
 #ifdef SIGNAL_VERIFY
@@ -218,14 +235,20 @@ unsigned char USI_TWI_Master_Transfer(unsigned char temp) {
          (1 << USICS1) | (0 << USICS0) | (1 << USICLK) | // Software clock strobe as source.
          (1 << USITC);                                   // Toggle Clock Port.
   do {
-    if (USI_TWI_MASTER_SPEED) DELAY_T2TWI_FM; else DELAY_T2TWI;
+    if (USI_TWI_MASTER_SPEED == 1) DELAY_T2TWI_FM; 
+    else if (USI_TWI_MASTER_SPEED == 2) DELAY_T2TWI_SM;
+    else DELAY_T2TWI;
     USICR = temp;                                        // Generate positive SCL edge.
     while (!(USI_CLOCK_PIN & (1 << USI_CLOCK_BIT)));        // Wait for SCL to go high.
-    if (USI_TWI_MASTER_SPEED) DELAY_T4TWI_FM; else DELAY_T4TWI;
+    if (USI_TWI_MASTER_SPEED == 1) DELAY_T4TWI_FM; 
+    else if (USI_TWI_MASTER_SPEED == 2) DELAY_T4TWI_SM;
+    else DELAY_T4TWI;
     USICR = temp;                                        // Generate negative SCL edge.
   } while (!(USISR & (1 << USIOIF)));                    // Check for transfer complete.
 
-  if (USI_TWI_MASTER_SPEED) DELAY_T2TWI_FM; else DELAY_T2TWI;
+  if (USI_TWI_MASTER_SPEED == 1) DELAY_T2TWI_FM; 
+  else if (USI_TWI_MASTER_SPEED == 2) DELAY_T2TWI_SM;
+  else DELAY_T2TWI;
   temp  = USIDR;                                         // Read out data.
   USIDR = 0xFF;                                          // Release SDA.
   USI_DDR |= (1 << USI_DI_BIT);                          // Enable SDA as output.
@@ -241,10 +264,16 @@ unsigned char USI_TWI_Master_Stop(void) {
   USI_PORT &= ~(1 << USI_DI_BIT);            // Pull SDA low.
   USI_CLOCK_PORT |= (1 << USI_CLOCK_BIT);         // Release SCL.
   while (!(USI_CLOCK_PIN & (1 << USI_CLOCK_BIT)));   // Wait for SCL to go high.
-  if (USI_TWI_MASTER_SPEED) DELAY_T4TWI_FM; else DELAY_T4TWI;
-  USI_PORT |= (1 << USI_DI_BIT);             // Release SDA.
-  if (USI_TWI_MASTER_SPEED) DELAY_T2TWI_FM; else DELAY_T2TWI;
+  if (USI_TWI_MASTER_SPEED == 1) DELAY_T4TWI_FM; 
+  else if (USI_TWI_MASTER_SPEED == 2) DELAY_T4TWI_SM;
+  else DELAY_T4TWI;
 
+
+  USI_PORT |= (1 << USI_DI_BIT);             // Release SDA.
+
+  if (USI_TWI_MASTER_SPEED == 1) DELAY_T2TWI_FM; 
+  else if (USI_TWI_MASTER_SPEED == 2) DELAY_T2TWI_SM;
+  else DELAY_T2TWI;
 #ifdef SIGNAL_VERIFY
   if (!(USISR & (1 << USIPF))) {
     USI_TWI_state.errorState = USI_TWI_MISSING_STOP_CON;

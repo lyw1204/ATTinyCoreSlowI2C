@@ -350,7 +350,7 @@ void disableAllPullups(bool mode) {
     badCall("The global pullup disable feature is not available on this part");
   #endif
 }
-
+/*
 uint8_t enableBBM(uint8_t port, uint8_t mode) {
   #if defined(PORTCR) && defined(PUDB) //All parts have PORTB
     #if defined(PORTA) && defined(PUDA)
@@ -384,7 +384,7 @@ uint8_t enableBBM(uint8_t port, uint8_t mode) {
     badCall("This part does not support portwise pullup disabling");
   #endif
 }
-
+*/
 uint8_t enableBBM(uint8_t port, uint8_t mode) {
   #if defined(PORTCR)
     #if defined(PORTA) && defined(BBMA)
